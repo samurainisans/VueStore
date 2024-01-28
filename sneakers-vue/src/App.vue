@@ -8,17 +8,23 @@ import CardList from './components/CardList.vue'
 const items = ref([])
 
 const filters = reactive({
-  sortBy: '',
+  sortBy: 'title',
   searchQuery: ''
 })
 
 // Функция для загрузки данных
 const loadData = async () => {
   try {
-    const response = await axios.get(
-      `https://bb957a3e7ec47e7e.mokky.dev/items?sortBy=${filters.sortBy}`
-    )
-    items.value = response.data
+    const params = {
+      sortBy: filters.sortBy
+    }
+
+    if (filters.searchQuery) {
+      params.title = `*${filters.searchQuery}*`
+    }
+
+    const { data } = await axios.get(`https://bb957a3e7ec47e7e.mokky.dev/items`, { params })
+    items.value = data
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
   }
@@ -31,11 +37,15 @@ onMounted(loadData)
 const onChangeSelect = (event) => {
   filters.sortBy = event.target.value
 }
+
+const onChangeSearchInput = (event) => {
+  filters.searchQuery = event.target.value
+}
 </script>
 
 <template>
   <div>
-    <!-- <Drawer /> -->
+    <Drawer />
     <div class="bg-white w-4/5 m-auto rounded-xl shadow-xl mt-14">
       <Header />
 
@@ -56,6 +66,7 @@ const onChangeSelect = (event) => {
             <div class="relative">
               <img class="absolute left-3 top-2.5" src="/search.svg" alt="search" />
               <input
+                @input="onChangeSearchInput"
                 class="border rounded-md p-1.5 pl-10 pr-4 outline-none focus:border-gray-400"
                 placeholder="Поиск..."
               />

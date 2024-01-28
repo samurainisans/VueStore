@@ -19,7 +19,7 @@ defineProps({
         :src="!isFavorite ? '/like-1.svg' : '/like-2.svg'"
         alt="like-2"
         class="absolute top-8 left-8"
-        @click="onClickFavorite"
+        @click="$emit('toggleFavorite', id)"
       />
 
       <img :src="imageUrl" alt="Sneaker" />
