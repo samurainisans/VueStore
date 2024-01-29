@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { onMounted, provide, reactive, ref, watch } from 'vue'
 import axios from 'axios'
 
 import Header from './components/Header.vue'
@@ -12,7 +12,6 @@ const filters = reactive({
   searchQuery: ''
 })
 
-// Функция для загрузки данных
 const loadData = async () => {
   try {
     const params = {
@@ -24,15 +23,61 @@ const loadData = async () => {
     }
 
     const { data } = await axios.get(`https://bb957a3e7ec47e7e.mokky.dev/items`, { params })
-    items.value = data
+
+    items.value = data.map((obj) => ({
+      ...obj,
+      isFavorite: false,
+      isAdded: false
+    }))
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
   }
 }
 
-watch(filters, loadData)
+const loadFavorites = async () => {
+  try {
+    const { data: favorites } = await axios.get(`https://bb957a3e7ec47e7e.mokky.dev/favorites`)
 
-onMounted(loadData)
+    items.value = items.value.map((item) => {
+      const favorite = favorites.find((favorite) => favorite.parentId === item.id)
+
+      if (!favorite) {
+        return item
+      }
+
+      return { ...item, isFavorite: true, favoriteId: favorite.id }
+    })
+  } catch (error) {
+    console.error('Ошибка загрузки данных:', error)
+  }
+}
+
+const addToFavorite = async (item) => {
+  item.isFavorite = !item.isFavorite
+  console.log(item)
+
+  if (item.isFavorite) {
+    try {
+      await axios.post(`https://bb957a3e7ec47e7e.mokky.dev/favorites`, {
+        parentId: item.id
+      })
+    } catch (error) {
+      console.error('Ошибка загрузки данных:', error)
+    }
+  } else {
+    try {
+      await axios.delete(`https://bb957a3e7ec47e7e.mokky.dev/favorites/${item.favoriteId}`)
+    } catch (error) {
+      console.error('Ошибка загрузки данных:', error)
+    }
+  }
+}
+
+onMounted(async () => {
+  await loadData()
+  await loadFavorites()
+})
+watch(() => ({ ...filters }), loadData, { deep: true })
 
 const onChangeSelect = (event) => {
   filters.sortBy = event.target.value
@@ -41,6 +86,8 @@ const onChangeSelect = (event) => {
 const onChangeSearchInput = (event) => {
   filters.searchQuery = event.target.value
 }
+
+provide('addToFavorite', addToFavorite)
 </script>
 
 <template>
@@ -66,15 +113,15 @@ const onChangeSearchInput = (event) => {
             <div class="relative">
               <img class="absolute left-3 top-2.5" src="/search.svg" alt="search" />
               <input
-                @input="onChangeSearchInput"
                 class="border rounded-md p-1.5 pl-10 pr-4 outline-none focus:border-gray-400"
+                @input="onChangeSearchInput"
                 placeholder="Поиск..."
               />
             </div>
           </div>
         </div>
         <div class="mt-10">
-          <CardList :items="items" />
+          <CardList :items="items" @addToFavorite="addToFavorite" />
         </div>
       </div>
     </div>

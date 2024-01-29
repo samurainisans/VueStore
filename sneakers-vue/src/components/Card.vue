@@ -1,12 +1,13 @@
 <script setup>
 defineProps({
+  id: Number,
   title: String,
   imageUrl: String,
   price: Number,
   isFavorite: Boolean,
   isAdded: Boolean,
-  onClickAdd: Function,
-  onClickFavorite: Function
+  onClickFavorite: Function,
+  onClickAdd: Function
 })
 </script>
 
@@ -16,10 +17,11 @@ defineProps({
       class="relative bg-white border border-slate-100 rounded-3xl p-8 cursor-pointer hover:shadow-xl hover:border-slate-200 transition duration-130 ease-in hover:scale-105 hover:shadow-2xl"
     >
       <img
+        v-if="onClickFavorite"
         :src="!isFavorite ? '/like-1.svg' : '/like-2.svg'"
-        alt="like-2"
+        alt="Like 1"
         class="absolute top-8 left-8"
-        @click="$emit('toggleFavorite', id)"
+        @click="onClickFavorite"
       />
 
       <img :src="imageUrl" alt="Sneaker" />
